@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face {
+    font-family: "Instrument Serif";
+    src: url("../fonts/InstrumentSerif-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+  }
+  @font-face {
+    font-family: "Instrument Sans";
+    src: url("../fonts/InstrumentSans-Regular.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: block;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: #12151c;
+    color: #12151c;
+  }
+  body {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .field {
+    position: absolute;
+    inset: 0;
+  }
+  .stage {
+    position: relative;
+    width: 876px;
+    height: 486px;
+  }
+  .plate {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 860px;
+    height: 470px;
+    background: #f4efe6;
+    box-shadow: 16px 16px 0 #c4622d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .mark { width: 100px; height: 100px; display: block; }
+  h1 {
+    margin-top: 18px;
+    font-family: "Instrument Serif", "Liberation Serif", serif;
+    font-weight: 400;
+    font-size: 196px;
+    line-height: 0.86;
+    letter-spacing: -0.035em;
+    color: #12151c;
+  }
+  .rule {
+    width: 72px;
+    height: 3px;
+    margin-top: 20px;
+    background: #c4622d;
+  }
+  .name {
+    margin-top: 16px;
+    font-family: "Instrument Serif", "Liberation Serif", serif;
+    font-size: 40px;
+    line-height: 1;
+    letter-spacing: -0.015em;
+    color: #12151c;
+  }
+  .role {
+    margin-top: 14px;
+    font-family: "Instrument Sans", "Liberation Sans", sans-serif;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 1;
+    letter-spacing: 0.22em;
+    color: #c4622d;
+  }
+</style>
+</head>
+<body>
+  <svg class="field" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <filter id="grain" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/>
+        <feColorMatrix type="saturate" values="0"/>
+      </filter>
+    </defs>
+    <rect width="1200" height="630" fill="#12151c"/>
+    <rect width="1200" height="630" filter="url(#grain)" opacity="0.055"/>
+    <g fill="none" stroke="#c4622d" stroke-width="1.25" opacity="0.85">
+      <path d="M36 36 H72 M36 36 V72"/>
+      <path d="M1164 36 H1128 M1164 36 V72"/>
+      <path d="M36 594 H72 M36 594 V558"/>
+      <path d="M1164 594 H1128 M1164 594 V558"/>
+    </g>
+    <g fill="none" stroke="#c4622d" stroke-width="1" opacity="0.28">
+      <circle cx="1048" cy="148" r="92"/>
+      <circle cx="1048" cy="148" r="58"/>
+      <path d="M956 148 H1140"/>
+      <path d="M1048 56 V240"/>
+    </g>
+    <g fill="none" stroke="#f4efe6" stroke-width="1" opacity="0.14">
+      <circle cx="168" cy="500" r="70"/>
+      <path d="M98 500 H238"/>
+    </g>
+  </svg>
+  <div class="stage">
+    <div class="plate">
+      <svg class="mark" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="2" y="2" width="92" height="92" fill="none" stroke="#c4622d" stroke-width="2"/>
+        <g fill="none" stroke-linecap="square" stroke-linejoin="miter">
+          <path stroke="#c4622d" stroke-width="6.5" d="M22 26 V72 M22 26 H46 M46 26 V48 M22 48 H46 M37 48 L50 72"/>
+          <path stroke="#12151c" stroke-width="6.5" d="M62 26 V72 M62 49 L78 26 M62 49 L78 72"/>
+        </g>
+      </svg>
+      <h1>Rosdeb OS</h1>
+      <div class="rule"></div>
+      <p class="name">Rosdeb Koch</p>
+      <p class="role">Senior Mobile Engineer</p>
+    </div>
+  </div>
+</body>
+</html>

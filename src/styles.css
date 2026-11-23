@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --color-canvas: var(--os-canvas);
+  --color-ink: var(--os-ink);
+  --color-muted: var(--os-muted);
+  --color-paper: var(--os-paper);
+  --color-line: var(--os-line);
+  --color-glass: var(--os-glass);
+  --color-accent: var(--os-accent);
+  --color-accent-ink: var(--os-accent-ink);
+  --color-danger: #ff5f57;
+  --color-warn: #febc2e;
+  --color-ok: #28c840;
+  --color-dock: var(--os-dock);
+  --color-menu: var(--os-menu);
+}
+
+:root {
+  --os-canvas: #e7e2d8;
+  --os-ink: #1c1915;
+  --os-muted: #6b645b;
+  --os-paper: #f7f4ee;
+  --os-line: rgba(28, 25, 21, 0.12);
+  --os-glass: rgba(255, 255, 255, 0.72);
+  --os-accent: #007aff;
+  --os-accent-ink: #ffffff;
+  --os-dock: rgba(255, 255, 255, 0.45);
+  --os-menu: rgba(255, 255, 255, 0.75);
+  --os-wallpaper: url('/mac_bg_image.avif');
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --os-canvas: #12151c;
+  --os-ink: #f3efe8;
+  --os-muted: #a39b90;
+  --os-paper: #1c212b;
+  --os-line: rgba(255, 255, 255, 0.12);
+  --os-glass: rgba(26, 30, 40, 0.72);
+  --os-accent: #0a84ff;
+  --os-accent-ink: #ffffff;
+  --os-dock: rgba(20, 24, 34, 0.55);
+  --os-menu: rgba(20, 24, 34, 0.75);
+  --os-wallpaper: url('/mac_bg_image.avif');
+  color-scheme: dark;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--os-canvas);
+    color: var(--os-ink);
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.os-wallpaper {
+  background-image: var(--os-wallpaper);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.os-glass {
+  background: var(--os-glass);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+}
+
+.win-shadow {
+  box-shadow: 0 25px 65px -12px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+
+@keyframes bootbar {
+  from {
+    transform: scaleX(0.08);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes dock-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+}
+
+.dock-bounce {
+  animation: dock-bounce 0.45s ease;
+}
+
+.os-scroll {
+  scrollbar-width: thin;
+}
