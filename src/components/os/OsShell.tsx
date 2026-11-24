@@ -1476,12 +1476,13 @@ function SkillsBody({ focus }: { focus?: string }) {
 
 function TerminalApp() {
   const [lines, setLines] = useState<string[]>([
-    "Last login: Mon Nov 23 11:00:00 on ttys001",
-    "Rosdeb OS Darwin Kernel Version 24.1.0: Apple ARM64",
-    'Type "help" or "man" to see available commands, or explore with ls / cd.',
+    "Last login: Tue Nov 24 17:00:00 on ttys001",
+    "Rosdeb OS Darwin Kernel Version 24.1.0: Apple ARM64 (macOS Sonoma)",
+    'Type "help" or "man" to see all commands, or navigate with ls / cd.',
     "",
   ]);
   const [cwd, setCwd] = useState<string>("/Users/rosdebkoch/Projects");
+  const [prevCwd, setPrevCwd] = useState<string>("/Users/rosdebkoch");
   const [cmd, setCmd] = useState("");
   const [hist, setHist] = useState<string[]>([]);
   const [hi, setHi] = useState(-1);
@@ -1492,24 +1493,36 @@ function TerminalApp() {
     "/": { type: "dir" },
     "/Users": { type: "dir" },
     "/Users/rosdebkoch": { type: "dir" },
+    "/Users/rosdebkoch/Desktop": { type: "dir" },
+    "/Users/rosdebkoch/Documents": { type: "dir" },
+    "/Users/rosdebkoch/Downloads": { type: "dir" },
     "/Users/rosdebkoch/Projects": { type: "dir" },
     "/Users/rosdebkoch/Projects/Mobile Apps": { type: "dir" },
     "/Users/rosdebkoch/Projects/Developer Tools": { type: "dir" },
     "/Users/rosdebkoch/Projects/Web & Culture": { type: "dir" },
     "/Users/rosdebkoch/Experience": { type: "dir" },
     "/Users/rosdebkoch/Skills": { type: "dir" },
-    "/Users/rosdebkoch/Documents": { type: "dir" },
     "/Users/rosdebkoch/README.md": {
       type: "file",
-      content: "Rosdeb OS 1.0\nSenior Mobile & Cross-Platform Software Engineer\nFlutter · iOS (Swift) · Android (Kotlin) · Next.js\nContact: rosdevkoch@gmail.com",
+      content:
+        "# Rosdeb OS 1.0\nSenior Mobile & Cross-Platform Software Engineer\n\nFlutter · iOS (Swift/SwiftUI) · Android (Kotlin/Java) · Next.js\nLocation: Dhaka, Bangladesh\nContact: rosdevkoch@gmail.com | +88 01925609656\nGitHub: https://github.com/Rosdeb\nLinkedIn: https://linkedin.com/in/rosdev-koch-260005324/",
     },
     "/Users/rosdebkoch/profile.txt": {
       type: "file",
-      content: `${profile.name} — ${profile.title}\n${profile.summary}\nGitHub: ${profile.github}\nLinkedIn: ${profile.linkedin}`,
+      content: `${profile.name} — ${profile.title}\n${profile.summary}\nGitHub: ${profile.github}\nLinkedIn: ${profile.linkedin}\nMobile: ${profile.phone}\nEmail: ${profile.email}`,
+    },
+    "/Users/rosdebkoch/contact.txt": {
+      type: "file",
+      content:
+        "Full Name: Rosdeb Koch\nRole: Senior Mobile & Cross-Platform Software Engineer\nMobile No: +88 01925609656\nEmail: rosdevkoch@gmail.com\nDate of Birth: 2007-01-12\nGender: Male\nLocation: Dhaka, Bangladesh\nGitHub: https://github.com/Rosdeb\nLinkedIn: https://linkedin.com/in/rosdev-koch-260005324/\nStatus: Available for select contracts",
     },
     "/Users/rosdebkoch/Documents/Rosdeb_Koch_CV.pdf": {
       type: "file",
-      content: "[Binary PDF file: Rosdeb Koch Resume / CV — run 'open cv' to view]",
+      content: "[Binary PDF file: Rosdeb Koch Resume / CV — run 'open cv' to view in browser]",
+    },
+    "/Users/rosdebkoch/Desktop/Resume (CV)": {
+      type: "file",
+      content: "[Binary PDF file: Rosdeb Koch Resume / CV — run 'open cv' to view in browser]",
     },
   });
 
@@ -1524,7 +1537,11 @@ function TerminalApp() {
           : "/Users/rosdebkoch/Projects/Web & Culture";
       next[`${folderPath}/${p.name.replace(/\s+/g, "_")}.md`] = {
         type: "file",
-        content: `# ${p.name} (${p.year})\n${p.summary}\nCategories: ${p.categories.join(", ")}\nTags: ${p.tags.join(", ")}\nFeatures:\n${p.features.map((f) => `- ${f}`).join("\n")}`,
+        content: `# ${p.name} (${p.year})\n${p.summary}\nCategories: ${p.categories.join(", ")}\nTags: ${p.tags.join(
+          ", "
+        )}\nFeatures:\n${p.features.map((f) => `- ${f}`).join("\n")}\n\nLinks:\n${p.links
+          .map((l) => `- [${l.label}] (${l.url}) [${l.type}]`)
+          .join("\n")}`,
       };
     });
     setVirtualFs(next);
@@ -1556,6 +1573,46 @@ function TerminalApp() {
     return "/" + resolved.join("/");
   };
 
+  const resolveTarget = (targetArg: string, mustBeDir = false): string | null => {
+    let clean = targetArg.trim().replace(/^"|"$/g, "").replace(/\\ /g, " ");
+    if (!clean || clean === "~") return "/Users/rosdebkoch";
+    if (clean === "-") return prevCwd;
+    if (clean === "..") return normalizePath("..");
+
+    // 1. Direct normalized lookup
+    const direct = normalizePath(clean);
+    if (virtualFs[direct] && (!mustBeDir || virtualFs[direct].type === "dir")) {
+      return direct;
+    }
+
+    // 2. Relative check inside current cwd
+    const prefix = cwd === "/" ? "/" : cwd + "/";
+    const relativeExact = prefix + clean;
+    if (virtualFs[relativeExact] && (!mustBeDir || virtualFs[relativeExact].type === "dir")) {
+      return relativeExact;
+    }
+
+    // 3. Case-insensitive lookup among all virtualFs paths
+    const lowerDirect = direct.toLowerCase();
+    for (const p of Object.keys(virtualFs)) {
+      if (p.toLowerCase() === lowerDirect && (!mustBeDir || virtualFs[p].type === "dir")) {
+        return p;
+      }
+    }
+
+    // 4. Case-insensitive lookup among children in cwd
+    for (const p of Object.keys(virtualFs)) {
+      if (p.startsWith(prefix)) {
+        const child = p.slice(prefix.length);
+        if (child.toLowerCase() === clean.toLowerCase() && (!mustBeDir || virtualFs[p].type === "dir")) {
+          return p;
+        }
+      }
+    }
+
+    return null;
+  };
+
   const run = (raw: string) => {
     const line = raw.trim();
     const promptHeader = `rosdebkoch@MacBook-Pro ${shortCwd} % ${line}`;
@@ -1566,24 +1623,154 @@ function TerminalApp() {
     }
 
     const out: string[] = [promptHeader];
-    const parts = line.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+
+    // Handle `cd..` without space
+    let effectiveLine = line;
+    if (effectiveLine.toLowerCase().startsWith("cd..")) {
+      effectiveLine = "cd .." + effectiveLine.slice(4);
+    }
+
+    const parts = effectiveLine.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
     const head = parts[0]?.toLowerCase() || "";
-    const args = parts.slice(1).map((a) => a.replace(/^"|"$/g, ""));
+    const rawArgs = parts.slice(1);
+    const args = rawArgs.map((a) => a.replace(/^"|"$/g, "").replace(/\\ /g, " "));
 
     if (head === "pwd") {
       out.push(cwd);
     } else if (head === "whoami") {
       out.push("rosdebkoch");
+    } else if (head === "id") {
+      out.push("uid=501(rosdebkoch) gid=20(staff) groups=20(staff),12(everyone),61(localaccounts),80(admin)");
+    } else if (head === "hostname") {
+      out.push("Rosdeb-MacBook-Pro.local");
     } else if (head === "uname") {
       if (args.includes("-a")) {
-        out.push("Darwin Rosdeb-MacBook-Pro.local 24.1.0 Darwin Kernel Version 24.1.0: Mon Nov 23 11:00:00 PST 2026; root:xnu-11215.1.30~1/RELEASE_ARM64_T6000 arm64");
+        out.push(
+          "Darwin Rosdeb-MacBook-Pro.local 24.1.0 Darwin Kernel Version 24.1.0: Apple ARM64 T6000 macOS 15.1"
+        );
       } else {
         out.push("Darwin");
       }
     } else if (head === "date") {
       out.push(new Date().toString());
+    } else if (head === "contact" || head === "bio") {
+      out.push(
+        "╔══════════════════════════════════════════════════════════════╗\n" +
+          "║               Rosdeb Koch — Contact & Profile                ║\n" +
+          "╠══════════════════════════════════════════════════════════════╣\n" +
+          "║ Full Name:  Rosdeb Koch                                      ║\n" +
+          "║ Role:       Senior Mobile & Cross-Platform Software Engineer ║\n" +
+          "║ Mobile:     +88 01925609656                                  ║\n" +
+          "║ Email:      rosdevkoch@gmail.com                             ║\n" +
+          "║ DOB:        2007-01-12                                       ║\n" +
+          "║ Location:   Dhaka, Bangladesh                                ║\n" +
+          "║ GitHub:     https://github.com/Rosdeb                        ║\n" +
+          "║ LinkedIn:   https://linkedin.com/in/rosdev-koch-260005324/   ║\n" +
+          "║ Status:     Available for contracts / full-time mobile work  ║\n" +
+          "╚══════════════════════════════════════════════════════════════╝"
+      );
+    } else if (head === "neofetch" || head === "fastfetch") {
+      out.push(
+        "                    'c.          rosdebkoch@Rosdeb-MacBook-Pro\n" +
+          "                 ,xNMM.          -----------------------------\n" +
+          "               .OMMMMo           OS: Rosdeb OS (macOS Sonoma 15.1)\n" +
+          "               OMMM0,            Host: MacBook Pro 16-inch (Apple M3 Max)\n" +
+          "     .;loddo:' lPEMo..;loodl-.   Kernel: Darwin 24.1.0 (arm64)\n" +
+          "   cKMMMMMMMMRMOMWMMMMMMMMMM0    Uptime: 2 hours, 18 mins\n" +
+          "  .KMMMMMMMMMMMMMMMMMMMMMMMWd.   Shell: zsh 5.9 (x86_64-apple-darwin24.0)\n" +
+          "  XMMMMMMMMMMMMMMMMMMMMMMMX.     Terminal: Rosdeb Terminal Emulator\n" +
+          " ;MMMMMMMMMMMMMMMMMMMMMMMM:      CPU: Apple M3 Max (16 cores)\n" +
+          " :MMMMMMMMMMMMMMMMMMMMMMMM:      Memory: 36 GB Unified Memory\n" +
+          " .NMMMMMMMMMMMMMMMMMMMMMMWd.     Stack: Flutter · iOS (Swift) · Android · Next.js\n" +
+          "  .XMMMMMMMMMMMMMMMMMMMMMMk      Projects: 19 Production Mobile Apps & Tools\n" +
+          "    .omMMMMMMMMMMMMMMMNfn:       Contact: rosdevkoch@gmail.com | +88 01925609656\n" +
+          "       .lOMMMMMMMMOo;.           GitHub: https://github.com/Rosdeb"
+      );
+    } else if (head === "git") {
+      const sub = args[0]?.toLowerCase() || "";
+      if (sub === "status") {
+        out.push("On branch main\nYour branch is up to date with 'origin/main'.\n\nnothing to commit, working tree clean");
+      } else if (sub === "log") {
+        out.push(
+          "commit e4d81f28b49 (HEAD -> main, origin/main)\n" +
+            "Author: Rosdeb Koch <rosdevkoch@gmail.com>\n" +
+            "Date:   Tue Nov 24 17:00:00 2026 +0600\n\n" +
+            "    feat: authentic macOS dock icons, real Finder Aqua split face & smooth physics\n\n" +
+            "commit c2a091bf371\n" +
+            "Author: Rosdeb Koch <rosdevkoch@gmail.com>\n" +
+            "Date:   Tue Nov 24 16:30:00 2026 +0600\n\n" +
+            "    feat: add 19 mobile & web projects with store links and in-browser CV"
+        );
+      } else if (sub === "branch") {
+        out.push("* main");
+      } else if (sub === "remote" && (args[1] === "-v" || !args[1])) {
+        out.push(
+          "origin  https://github.com/Rosdeb/ROSDEB-MACOS.git (fetch)\norigin  https://github.com/Rosdeb/ROSDEB-MACOS.git (push)"
+        );
+      } else if (sub === "push") {
+        out.push("Everything up-to-date");
+      } else if (sub === "pull") {
+        out.push("Already up to date.");
+      } else if (sub === "diff") {
+        out.push("(working tree clean)");
+      } else {
+        out.push(`git: '${sub}' is available. Try 'git status', 'git log', 'git remote -v', 'git push'.`);
+      }
+    } else if (head === "ps" || head === "top") {
+      out.push(
+        "  PID TTY           TIME CMD\n" +
+          "  301 ??         0:04.12 /System/Library/CoreServices/WindowServer\n" +
+          "  342 ??         0:01.45 /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock\n" +
+          "  389 ??         0:02.10 /System/Library/CoreServices/Finder.app/Contents/MacOS/Finder\n" +
+          "  512 ttys001    0:00.32 /Applications/Utilities/Terminal.app/Contents/MacOS/Terminal\n" +
+          "  604 ??         0:03.88 /Applications/Safari.app/Contents/MacOS/Safari"
+      );
+    } else if (head === "curl") {
+      const url = args.find((a) => !a.startsWith("-")) || "";
+      if (url.includes("github") || url.includes("Rosdeb")) {
+        out.push(
+          JSON.stringify(
+            {
+              login: "Rosdeb",
+              name: "Rosdeb Koch",
+              company: "SparkTech Agency",
+              blog: "https://rosdeb.dev",
+              location: "Dhaka, Bangladesh",
+              email: "rosdevkoch@gmail.com",
+              phone: "+88 01925609656",
+              public_repos: 19,
+              bio: "Senior Mobile & Cross-Platform Engineer (Flutter, Swift, Kotlin, Next.js)",
+            },
+            null,
+            2
+          )
+        );
+      } else if (url.includes("ifconfig") || url.includes("icanhazip")) {
+        out.push("103.145.22.45");
+      } else {
+        out.push(`HTTP/2 200 OK\ncontent-type: text/html\n\n<!doctype html><html><body>Rosdeb OS Network Gateway OK</body></html>`);
+      }
     } else if (head === "echo") {
-      out.push(args.join(" "));
+      const fullEcho = args.join(" ");
+      // Handle file redirection: echo "content" > file
+      if (fullEcho.includes(">")) {
+        const isAppend = fullEcho.includes(">>");
+        const parts = fullEcho.split(isAppend ? ">>" : ">");
+        const content = parts[0].trim().replace(/^"|"$/g, "");
+        const filename = parts[1]?.trim().replace(/^"|"$/g, "");
+        if (filename) {
+          const resolved = normalizePath(filename);
+          setVirtualFs((v) => ({
+            ...v,
+            [resolved]: {
+              type: "file",
+              content: isAppend && v[resolved]?.content ? v[resolved].content + "\n" + content : content,
+            },
+          }));
+        }
+      } else {
+        out.push(fullEcho);
+      }
     } else if (head === "clear") {
       setLines([]);
       setCmd("");
@@ -1593,26 +1780,31 @@ function TerminalApp() {
     } else if (head === "help" || head === "man") {
       out.push(
         "Rosdeb OS Terminal — Shell Commands Reference:\n" +
-          "  ls [-la] [path]    - List directory contents\n" +
-          "  cd <dir>           - Change directory (cd .., cd ~, cd Projects, cd /)\n" +
+          "  ls [-la] [path]    - List directory contents (e.g. ls, ls -la, ls Projects)\n" +
+          "  cd <dir>           - Change directory (cd .., cd ~, cd Projects, cd 'Mobile Apps', cd -)\n" +
           "  pwd                - Print current working directory\n" +
-          "  cat <file>         - Display file contents\n" +
-          "  open <target>      - Open target in OS UI (open safari, open finder, open cv)\n" +
+          "  cat <file>         - Display file contents (cat README.md, cat contact.txt)\n" +
+          "  open <target>      - Open in UI (open ., open cv, open safari, open mail, open finder)\n" +
+          "  git <status|log>   - Git source control commands (git status, git log, git remote -v)\n" +
+          "  contact / bio      - Display Rosdeb's phone, email, bio, and coordinates\n" +
+          "  neofetch           - Display system hardware & engineering summary\n" +
+          "  curl <url>         - Fetch API or network endpoint\n" +
           "  mkdir <name>       - Create a virtual directory\n" +
           "  touch <name>       - Create an empty file\n" +
-          "  rm <name>          - Remove a file or directory\n" +
-          "  whoami             - Display active user\n" +
+          "  rm [-rf] <name>    - Remove a file or directory\n" +
+          "  whoami / id        - Display active user identity\n" +
           "  uname -a           - Print OS kernel release\n" +
           "  date               - Print system date & time\n" +
-          "  echo <text>        - Print text\n" +
+          "  ps / top           - Show active processes\n" +
           "  theme <dark|light> - Change system appearance\n" +
           "  sudo hire rosdeb   - Request contractor clearance\n" +
           "  clear              - Clear terminal screen buffer"
       );
     } else if (head === "ls" || head === "dir") {
-      const isLong = args.includes("-l") || args.includes("-la") || args.includes("-al");
+      const isLong = args.includes("-l") || args.includes("-la") || args.includes("-al") || args.includes("-lh");
       const targetArg = args.find((a) => !a.startsWith("-"));
-      const targetPath = targetArg ? normalizePath(targetArg) : cwd;
+      const resolvedTarget = targetArg ? resolveTarget(targetArg, false) : cwd;
+      const targetPath = resolvedTarget || (targetArg ? normalizePath(targetArg) : cwd);
 
       const entries: { name: string; isDir: boolean; size?: number }[] = [];
       const prefix = targetPath === "/" ? "/" : targetPath + "/";
@@ -1640,63 +1832,86 @@ function TerminalApp() {
           out.push(`total ${entries.length * 8}`);
           entries.forEach((e) => {
             const perm = e.isDir ? "drwxr-xr-x" : "-rw-r--r--";
-            const dateStr = "Nov 23 11:00";
+            const dateStr = "Nov 24 17:00";
             out.push(`${perm}  staff  ${String(e.size || 512).padStart(6, " ")} ${dateStr} ${e.name}${e.isDir ? "/" : ""}`);
           });
         } else {
-          const rendered = entries
-            .map((e) => (e.isDir ? `${e.name}/` : e.name))
-            .join("    ");
+          const rendered = entries.map((e) => (e.isDir ? `${e.name}/` : e.name)).join("    ");
           out.push(rendered);
         }
       }
     } else if (head === "cd") {
-      const target = args[0] || "~";
-      const resolved = normalizePath(target);
-      if (virtualFs[resolved]) {
-        if (virtualFs[resolved].type === "dir") {
-          setCwd(resolved);
-        } else {
-          out.push(`cd: not a directory: ${target}`);
-        }
+      const target = args.join(" ").trim() || "~";
+      if (target === "-") {
+        const next = prevCwd;
+        setPrevCwd(cwd);
+        setCwd(next);
+        out.push(next);
       } else {
-        out.push(`cd: no such file or directory: ${target}`);
+        const resolved = resolveTarget(target, false);
+        if (resolved && virtualFs[resolved]) {
+          if (virtualFs[resolved].type === "dir") {
+            setPrevCwd(cwd);
+            setCwd(resolved);
+          } else {
+            out.push(`cd: not a directory: ${target}`);
+          }
+        } else {
+          out.push(`cd: no such file or directory: ${target}`);
+        }
       }
     } else if (head === "cat") {
-      if (!args[0]) {
+      const target = args.join(" ").trim();
+      if (!target) {
         out.push("usage: cat <filename>");
       } else {
-        const resolved = normalizePath(args[0]);
-        if (virtualFs[resolved]) {
+        const resolved = resolveTarget(target, false);
+        if (resolved && virtualFs[resolved]) {
           if (virtualFs[resolved].type === "file") {
             out.push(virtualFs[resolved].content || "");
           } else {
-            out.push(`cat: ${args[0]}: Is a directory`);
+            out.push(`cat: ${target}: Is a directory`);
           }
         } else {
-          out.push(`cat: ${args[0]}: No such file or directory`);
+          out.push(`cat: ${target}: No such file or directory`);
+        }
+      }
+    } else if (head === "code" || head === "nano" || head === "vim") {
+      const target = args.join(" ").trim();
+      if (!target) {
+        out.push(`usage: ${head} <filename>`);
+      } else {
+        const resolved = resolveTarget(target, false);
+        if (resolved && virtualFs[resolved]?.type === "file") {
+          out.push(`[${head}] Opening ${resolved} in Preview editor...`);
+          useOs.getState().openWindow("preview", target, { kind: "note", id: "profile" });
+        } else {
+          out.push(`${head}: ${target}: No such file`);
         }
       }
     } else if (head === "mkdir") {
-      if (!args[0]) {
+      const target = args.join(" ").trim();
+      if (!target) {
         out.push("usage: mkdir <directory_name>");
       } else {
-        const resolved = normalizePath(args[0]);
+        const resolved = normalizePath(target);
         setVirtualFs((v) => ({ ...v, [resolved]: { type: "dir" } }));
       }
     } else if (head === "touch") {
-      if (!args[0]) {
+      const target = args.join(" ").trim();
+      if (!target) {
         out.push("usage: touch <filename>");
       } else {
-        const resolved = normalizePath(args[0]);
+        const resolved = normalizePath(target);
         setVirtualFs((v) => ({ ...v, [resolved]: { type: "file", content: "" } }));
       }
     } else if (head === "rm") {
-      const target = args.find((a) => !a.startsWith("-"));
+      const cleanArgs = args.filter((a) => !a.startsWith("-"));
+      const target = cleanArgs.join(" ").trim();
       if (!target) {
         out.push("usage: rm <filename>");
       } else {
-        const resolved = normalizePath(target);
+        const resolved = resolveTarget(target, false) || normalizePath(target);
         if (virtualFs[resolved]) {
           setVirtualFs((v) => {
             const next = { ...v };
@@ -1734,16 +1949,39 @@ function TerminalApp() {
       } else if (target.includes("mail") || target.includes("contact")) {
         useOs.getState().openWindow("mail", "Mail");
         out.push("Opened Mail");
-      } else if (target.includes("cv") || target.includes("resume")) {
-        useOs.getState().openWindow("preview", "CV", { kind: "note", id: "cv" });
-        out.push("Opened CV Preview");
+      } else if (target.includes("cv") || target.includes("resume") || target.includes("pdf")) {
+        useOs.getState().openWindow("safari", "Rosdeb CV (Resume)", {
+          kind: "url",
+          url: "/rosdeb-cv.pdf",
+          title: "Rosdeb_Koch_CV.pdf — Safari",
+        });
+        out.push("Opened Resume (CV) in Safari browser");
+      } else if (target.includes("github")) {
+        useOs.getState().openWindow("safari", "GitHub", { kind: "url", url: profile.github, title: "GitHub — Rosdeb" });
+        out.push("Opened GitHub in Safari");
+      } else if (target.includes("linkedin")) {
+        useOs.getState().openWindow("safari", "LinkedIn", { kind: "url", url: profile.linkedin, title: "LinkedIn — Rosdeb Koch" });
+        out.push("Opened LinkedIn in Safari");
+      } else if (target.includes("settings")) {
+        useOs.getState().openWindow("settings", "Settings");
+        out.push("Opened Settings");
       } else {
         const proj = projects.find((p) => p.name.toLowerCase().includes(target) || p.id.toLowerCase() === target);
         if (proj) {
           useOs.getState().openWindow("preview", proj.name, { kind: "project", id: proj.id });
           out.push(`Opened ${proj.name}`);
         } else {
-          out.push(`open: cannot open '${target}'`);
+          // Check if it's a directory
+          const resolved = resolveTarget(target, true);
+          if (resolved) {
+            useOs.getState().openWindow("finder", resolved.split("/").pop() || "Finder", {
+              kind: "path",
+              path: resolved.replace("/Users/rosdebkoch/", "").replace("/Users/rosdebkoch", "About Me"),
+            });
+            out.push(`Opened Finder at ${resolved}`);
+          } else {
+            out.push(`open: cannot open '${target}'`);
+          }
         }
       }
     } else {
@@ -1776,11 +2014,39 @@ function TerminalApp() {
     }
     if (e.key === "Tab") {
       e.preventDefault();
-      const commands = ["ls", "cd", "pwd", "cat", "open", "whoami", "uname", "date", "echo", "mkdir", "touch", "rm", "clear", "help", "theme", "history"];
+      const commands = [
+        "ls",
+        "cd",
+        "pwd",
+        "cat",
+        "open",
+        "git",
+        "contact",
+        "neofetch",
+        "whoami",
+        "id",
+        "uname",
+        "date",
+        "echo",
+        "mkdir",
+        "touch",
+        "rm",
+        "ps",
+        "top",
+        "curl",
+        "clear",
+        "help",
+        "theme",
+        "history",
+      ];
       const prefix = cwd === "/" ? "/" : cwd + "/";
       const localFiles = Object.keys(virtualFs)
         .filter((p) => p.startsWith(prefix) && !p.slice(prefix.length).includes("/"))
-        .map((p) => p.slice(prefix.length));
+        .map((p) => {
+          const name = p.slice(prefix.length);
+          return name.includes(" ") ? `"${name}"` : name;
+        });
+
       const pool = [...commands, ...localFiles];
       const match = pool.find((item) => item.toLowerCase().startsWith(cmd.toLowerCase()));
       if (match) setCmd(match);
@@ -1795,7 +2061,18 @@ function TerminalApp() {
     >
       <div className="os-scroll flex-1 overflow-auto whitespace-pre-wrap leading-relaxed space-y-1">
         {lines.map((l, i) => (
-          <div key={i} className={l.startsWith("rosdebkoch@MacBook-Pro") ? "text-emerald-400 font-semibold" : l.startsWith("zsh:") ? "text-rose-400" : ""}>
+          <div
+            key={i}
+            className={
+              l.startsWith("rosdebkoch@MacBook-Pro")
+                ? "text-emerald-400 font-semibold"
+                : l.startsWith("zsh:")
+                ? "text-rose-400"
+                : l.includes("═══") || l.includes("OS:") || l.includes("Host:")
+                ? "text-cyan-300 font-medium"
+                : ""
+            }
+          >
             {l}
           </div>
         ))}
