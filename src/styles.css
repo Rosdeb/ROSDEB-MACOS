@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+  --font-mono: "SF Mono", "IBM Plex Mono", ui-monospace, "Menlo", monospace;
   --color-canvas: var(--os-canvas);
   --color-ink: var(--os-ink);
   --color-muted: var(--os-muted);
@@ -16,42 +16,46 @@
   --color-ok: #28c840;
   --color-dock: var(--os-dock);
   --color-menu: var(--os-menu);
+  --color-sidebar: var(--os-sidebar);
+  --color-toolbar: var(--os-toolbar);
 }
 
 :root {
-  --os-canvas: #e7e2d8;
-  --os-ink: #1c1915;
-  --os-muted: #6b645b;
-  --os-paper: #f7f4ee;
-  --os-line: rgba(28, 25, 21, 0.12);
-  --os-glass: rgba(255, 255, 255, 0.72);
+  --os-canvas: #f5f5f5;
+  --os-ink: #1d1d1f;
+  --os-muted: #86868b;
+  --os-paper: #ffffff;
+  --os-line: rgba(0, 0, 0, 0.09);
+  --os-glass: rgba(246, 246, 246, 0.78);
   --os-accent: #007aff;
   --os-accent-ink: #ffffff;
-  --os-dock: rgba(255, 255, 255, 0.45);
-  --os-menu: rgba(255, 255, 255, 0.75);
+  --os-dock: rgba(243, 243, 243, 0.52);
+  --os-menu: rgba(246, 246, 246, 0.82);
+  --os-sidebar: rgba(240, 240, 240, 0.65);
+  --os-toolbar: rgba(246, 246, 246, 0.9);
   --os-wallpaper: url('/mac_bg_image.avif');
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --os-canvas: #12151c;
-  --os-ink: #f3efe8;
-  --os-muted: #a39b90;
-  --os-paper: #1c212b;
-  --os-line: rgba(255, 255, 255, 0.12);
-  --os-glass: rgba(26, 30, 40, 0.72);
+  --os-canvas: #1e1e1e;
+  --os-ink: #f5f5f7;
+  --os-muted: #98989d;
+  --os-paper: #2c2c2e;
+  --os-line: rgba(255, 255, 255, 0.1);
+  --os-glass: rgba(40, 40, 42, 0.78);
   --os-accent: #0a84ff;
   --os-accent-ink: #ffffff;
-  --os-dock: rgba(20, 24, 34, 0.55);
-  --os-menu: rgba(20, 24, 34, 0.75);
+  --os-dock: rgba(30, 30, 32, 0.6);
+  --os-menu: rgba(40, 40, 42, 0.82);
+  --os-sidebar: rgba(38, 38, 40, 0.65);
+  --os-toolbar: rgba(44, 44, 46, 0.9);
   --os-wallpaper: url('/mac_bg_image.avif');
   color-scheme: dark;
 }
 
 @layer base {
-  html,
-  body,
-  #root {
+  html, body, #root {
     height: 100%;
   }
   body {
@@ -59,6 +63,8 @@
     font-family: var(--font-sans);
     background: var(--os-canvas);
     color: var(--os-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
@@ -67,15 +73,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
 
+/* macOS Wallpaper */
 .os-wallpaper {
   background-image: var(--os-wallpaper);
   background-size: cover;
@@ -83,39 +88,129 @@
   background-repeat: no-repeat;
 }
 
+/* macOS Vibrancy / Glass */
 .os-glass {
   background: var(--os-glass);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
 }
 
+/* macOS Window Shadow */
 .win-shadow {
-  box-shadow: 0 25px 65px -12px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  box-shadow:
+    0 22px 70px 4px rgba(0, 0, 0, 0.28),
+    0 0 0 0.5px rgba(0, 0, 0, 0.12);
 }
 
+.win-shadow-focused {
+  box-shadow:
+    0 22px 70px 4px rgba(0, 0, 0, 0.36),
+    0 0 0 0.5px rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="dark"] .win-shadow {
+  box-shadow:
+    0 22px 70px 4px rgba(0, 0, 0, 0.56),
+    0 0 0 0.5px rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .win-shadow-focused {
+  box-shadow:
+    0 22px 70px 4px rgba(0, 0, 0, 0.65),
+    0 0 0 0.5px rgba(255, 255, 255, 0.12);
+}
+
+/* macOS Menu bar */
+.os-menubar {
+  background: var(--os-menu);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+}
+
+/* macOS Sidebar */
+.os-sidebar {
+  background: var(--os-sidebar);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+/* macOS Toolbar */
+.os-toolbar {
+  background: var(--os-toolbar);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+/* Boot animation */
 @keyframes bootbar {
-  from {
-    transform: scaleX(0.08);
-  }
-  to {
-    transform: scaleX(1);
-  }
+  from { transform: scaleX(0.08); }
+  to { transform: scaleX(1); }
 }
 
+/* Dock bounce */
 @keyframes dock-bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-7px); }
+  50% { transform: translateY(-2px); }
+  70% { transform: translateY(-4px); }
 }
 
 .dock-bounce {
-  animation: dock-bounce 0.45s ease;
+  animation: dock-bounce 0.45s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+/* Window open animation */
+@keyframes win-open {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.win-open {
+  animation: win-open 0.18s ease-out;
+}
+
+/* macOS Scrollbar */
 .os-scroll {
   scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+
+[data-theme="dark"] .os-scroll {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.os-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.os-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.os-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+[data-theme="dark"] .os-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  background-clip: content-box;
+}
+
+/* macOS Dock magnification */
+.dock-item {
+  transition: transform 0.15s ease;
+}
+
+.dock-item:hover {
+  transform: translateY(-6px) scale(1.25);
+}
+
+/* macOS Selection highlight for desktop icons */
+.desktop-icon-selected {
+  background: rgba(0, 122, 255, 0.18);
+  border-radius: 8px;
 }

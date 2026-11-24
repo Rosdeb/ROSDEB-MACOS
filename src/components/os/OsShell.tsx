@@ -41,6 +41,18 @@ import {
   type SearchHit,
 } from "@/lib/os/data";
 import { useOs, type AppId, type Payload, type WindowState } from "@/lib/os/store";
+import {
+  MacFolderIcon,
+  MacFinderIcon,
+  MacDocIcon,
+  MacSafariIcon,
+  MacTerminalIcon,
+  MacMailIcon,
+  MacSettingsIcon,
+  MacGithubIcon,
+  MacLinkedinIcon,
+  MacTrashIcon,
+} from "./MacIcons";
 
 function useClock() {
   const [now, setNow] = useState<Date | null>(null);
@@ -512,32 +524,89 @@ function MenuBar() {
   );
 }
 
-const deskIcons: { name: string; icon: typeof Folder; run: () => void }[] = [
-  { name: "About Me", icon: UserRound, run: () => useOs.getState().openWindow("finder", "About Me", { kind: "path", path: "About Me" }) },
-  { name: "Experience", icon: Briefcase, run: () => useOs.getState().openWindow("finder", "Experience", { kind: "path", path: "Experience" }) },
-  { name: "Projects", icon: FolderKanban, run: () => useOs.getState().openWindow("finder", "Projects", { kind: "path", path: "Projects" }) },
-  { name: "My Skills", icon: Sparkles, run: () => useOs.getState().openWindow("skills", "Skills") },
-  { name: "Contact", icon: Mail, run: () => useOs.getState().openWindow("mail", "Mail") },
-  { name: "README.md", icon: FileText, run: () => useOs.getState().openWindow("preview", "README.md", { kind: "note", id: "readme" }) },
+type DeskItem = {
+  name: string;
+  kind: "home" | "folder" | "projects" | "skills" | "mail" | "doc";
+  run: () => void;
+};
+
+const deskIcons: DeskItem[] = [
+  { name: "About Me", kind: "home", run: () => useOs.getState().openWindow("finder", "About Me", { kind: "path", path: "About Me" }) },
+  { name: "Experience", kind: "folder", run: () => useOs.getState().openWindow("finder", "Experience", { kind: "path", path: "Experience" }) },
+  { name: "Projects", kind: "projects", run: () => useOs.getState().openWindow("finder", "Projects", { kind: "path", path: "Projects" }) },
+  { name: "My Skills", kind: "skills", run: () => useOs.getState().openWindow("skills", "Skills") },
+  { name: "Contact", kind: "mail", run: () => useOs.getState().openWindow("mail", "Mail") },
+  {
+    name: "Resume (CV)",
+    kind: "doc",
+    run: () =>
+      useOs.getState().openWindow("safari", "Rosdeb Koch CV", {
+        kind: "url",
+        url: "/rosdeb--cv.pdf",
+        title: "Rosdeb Koch — Curriculum Vitae (PDF)",
+      }),
+  },
+  { name: "README.md", kind: "doc", run: () => useOs.getState().openWindow("preview", "README.md", { kind: "note", id: "readme" }) },
 ];
 
 function DesktopIcons() {
+  const [selected, setSelected] = useState<string | null>(null);
+
   return (
-    <div className="absolute left-3 top-12 flex w-24 flex-col gap-3 select-none">
-      {deskIcons.map((ic) => (
-        <button
-          key={ic.name}
-          className="group flex flex-col items-center gap-1 rounded-xl p-1.5 text-center transition-all hover:bg-white/15"
-          onClick={ic.run}
-        >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg group-hover:scale-105 transition-transform">
-            <ic.icon size={24} strokeWidth={1.7} className="text-white drop-shadow" />
-          </div>
-          <span className="rounded px-1.5 py-0.5 text-[10px] font-medium leading-tight text-white drop-shadow-md bg-black/40 backdrop-blur-sm line-clamp-2">
-            {ic.name}
-          </span>
-        </button>
-      ))}
+    <div
+      className="absolute left-4 top-12 flex w-28 flex-col gap-3.5 select-none z-10"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setSelected(null);
+      }}
+    >
+      {deskIcons.map((ic) => {
+        const isSel = selected === ic.name;
+        return (
+          <button
+            key={ic.name}
+            className={`group flex flex-col items-center gap-1 rounded-xl p-1 text-center transition-all outline-none focus:outline-none ${
+              isSel ? "bg-white/20 shadow-xs" : "hover:bg-white/10"
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelected(ic.name);
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              ic.run();
+            }}
+            onTouchEnd={() => {
+              ic.run();
+            }}
+          >
+            <div className="flex h-13 w-13 items-center justify-center transition-transform group-hover:scale-105 active:scale-95">
+              {ic.kind === "home" && <MacFolderIcon size={52} variant="home" />}
+              {ic.kind === "projects" && <MacFolderIcon size={52} variant="projects" />}
+              {ic.kind === "folder" && <MacFolderIcon size={52} variant="plain" />}
+              {ic.kind === "doc" && <MacDocIcon size={46} badge="MD" />}
+              {ic.kind === "skills" && (
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md">
+                  <Sparkles size={24} className="text-white drop-shadow" />
+                </div>
+              )}
+              {ic.kind === "mail" && (
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 shadow-md">
+                  <Mail size={24} className="text-white drop-shadow" />
+                </div>
+              )}
+            </div>
+            <span
+              className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-tight line-clamp-2 transition-colors ${
+                isSel
+                  ? "bg-[#007aff] text-white shadow-sm font-semibold"
+                  : "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] bg-black/40 backdrop-blur-xs group-hover:bg-black/55"
+              }`}
+            >
+              {ic.name}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -546,6 +615,7 @@ function Dock() {
   const windows = useOs((s) => s.windows);
   const bouncing = useOs((s) => s.bouncing);
   const running = (app: AppId) => windows.some((w) => w.app === app);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   const items: { id: AppId | "github" | "linkedin" | "trash"; label: string; icon: typeof Folder; run: () => void }[] = [
     { id: "finder", label: "Finder", icon: Folder, run: () => useOs.getState().openWindow("finder", "Finder", { kind: "path", path: "Projects" }) },
@@ -567,34 +637,69 @@ function Dock() {
   ];
 
   return (
-    <nav className="absolute bottom-3 left-1/2 z-[70] flex -translate-x-1/2 items-end gap-1.5 rounded-2xl border border-white/25 shadow-2xl px-2.5 py-2 backdrop-blur-3xl bg-white/20 dark:bg-black/35 select-none">
-      {items.map((it) => {
+    <nav
+      className="absolute bottom-3 left-1/2 z-[70] flex -translate-x-1/2 items-end gap-2 rounded-2xl border border-white/15 px-3 py-2 backdrop-blur-3xl bg-[#141820]/85 shadow-[0_22px_55px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.08)_inset] select-none"
+      onMouseLeave={() => setHoveredIdx(null)}
+    >
+      {items.map((it, idx) => {
         const app = it.id as AppId;
         const dot = it.id !== "github" && it.id !== "linkedin" && it.id !== "trash" && windows.some((w) => w.app === app);
+
+        // Subtle and smooth macOS dock magnification
+        let scale = 1;
+        let translateY = 0;
+        if (hoveredIdx !== null) {
+          const dist = Math.abs(hoveredIdx - idx);
+          if (dist === 0) {
+            scale = 1.18;
+            translateY = -5;
+          } else if (dist === 1) {
+            scale = 1.08;
+            translateY = -2;
+          }
+        }
+
         return (
-          <button
+          <div
             key={it.label}
-            title={it.label}
-            aria-label={it.label}
-            className={`group relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 hover:bg-white/25 border border-white/15 backdrop-blur-md shadow-md hover:scale-110 active:scale-95 transition-all ${
-              bouncing === it.id ? "dock-bounce" : ""
-            }`}
-            onClick={() => {
-              const minimized = windows.find((w) => w.app === app && w.minimized);
-              if (minimized && it.id !== "finder") {
-                useOs.getState().restoreWindow(minimized.id);
-                useOs.getState().focusWindow(minimized.id);
-                return;
-              }
-              it.run();
+            className="relative flex flex-col items-center origin-bottom"
+            style={{
+              transform: `scale(${scale}) translateY(${translateY}px)`,
+              transition: "transform 0.12s cubic-bezier(0.25, 1, 0.5, 1)",
             }}
+            onMouseEnter={() => setHoveredIdx(idx)}
           >
-            <it.icon size={22} strokeWidth={1.6} className="text-white drop-shadow-sm" />
-            {dot && <span className="absolute bottom-1 h-1 w-1 rounded-full bg-white shadow" />}
-            <span className="pointer-events-none absolute -top-8 hidden rounded-md bg-black/75 backdrop-blur-md px-2 py-0.5 text-[10px] font-medium text-white group-hover:block shadow">
-              {it.label}
-            </span>
-          </button>
+            <button
+              title={it.label}
+              aria-label={it.label}
+              className={`group relative flex h-12 w-12 items-center justify-center rounded-2xl active:scale-95 transition-transform ${
+                bouncing === it.id ? "dock-bounce" : ""
+              }`}
+              onClick={() => {
+                const minimized = windows.find((w) => w.app === app && w.minimized);
+                if (minimized && it.id !== "finder") {
+                  useOs.getState().restoreWindow(minimized.id);
+                  useOs.getState().focusWindow(minimized.id);
+                  return;
+                }
+                it.run();
+              }}
+            >
+              {it.id === "finder" && <MacFinderIcon size={46} className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]" />}
+              {it.id === "safari" && <MacSafariIcon size={46} className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]" />}
+              {it.id === "terminal" && <MacTerminalIcon size={46} className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]" />}
+              {it.id === "mail" && <MacMailIcon size={46} className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]" />}
+              {it.id === "settings" && <MacSettingsIcon size={46} className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]" />}
+              {it.id === "github" && <MacGithubIcon size={46} className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]" />}
+              {it.id === "linkedin" && <MacLinkedinIcon size={46} className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]" />}
+              {it.id === "trash" && <MacTrashIcon size={46} className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]" />}
+              <span className="pointer-events-none absolute -top-8 hidden rounded-md bg-black/85 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-medium text-white group-hover:block shadow-[0_4px_12px_rgba(0,0,0,0.5)] border border-white/10 z-50">
+                {it.label}
+              </span>
+            </button>
+            {dot && <span className="mt-1 h-1 w-1 rounded-full bg-white/90 shadow-[0_0_6px_rgba(255,255,255,0.9)]" />}
+            {!dot && <span className="mt-1 h-1 w-1" />}
+          </div>
         );
       })}
       <span className="sr-only">{running("finder") ? "finder running" : ""}</span>
@@ -644,13 +749,28 @@ function WindowFrame({ win }: { win: WindowState }) {
       onPointerDown={() => useOs.getState().focusWindow(win.id)}
     >
       <header
-        className="os-glass flex h-10 shrink-0 items-center gap-2 border-b border-line px-3"
+        className="os-glass flex h-10 shrink-0 items-center gap-2 border-b border-line px-3 select-none"
         onPointerDown={onBar}
         onPointerMove={onMove}
         onPointerUp={onUp}
       >
         <Traffic id={win.id} />
-        <h2 className="pointer-events-none flex-1 truncate text-center text-xs font-semibold">{win.title}</h2>
+        <div className="pointer-events-none flex-1 flex items-center justify-center gap-1.5 truncate text-xs font-semibold">
+          {win.app === "finder" && (
+            <MacFolderIcon
+              size={15}
+              variant={win.title === "About Me" ? "home" : win.title.toLowerCase().includes("project") ? "projects" : "plain"}
+              className="inline-block"
+            />
+          )}
+          {win.app === "preview" && <MacDocIcon size={14} badge="" className="inline-block" />}
+          {win.app === "skills" && <Sparkles size={13} className="text-purple-500 inline-block" />}
+          {win.app === "terminal" && <TerminalSquare size={13} className="text-emerald-500 inline-block" />}
+          {win.app === "safari" && <Compass size={13} className="text-blue-500 inline-block" />}
+          {win.app === "mail" && <Mail size={13} className="text-rose-500 inline-block" />}
+          {win.app === "settings" && <Settings size={13} className="text-slate-500 inline-block" />}
+          <h2 className="truncate">{win.title}</h2>
+        </div>
         <span className="w-14" />
       </header>
       <div className="os-scroll min-h-0 flex-1 overflow-auto">
@@ -793,6 +913,19 @@ function Welcome() {
       <div className="mt-auto flex flex-wrap items-center gap-2 pt-3 border-t border-line">
         <button
           className="flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-ink hover:opacity-90 shadow-sm transition-all"
+          onClick={() =>
+            useOs.getState().openWindow("safari", "Rosdeb Koch CV", {
+              kind: "url",
+              url: "/rosdeb--cv.pdf",
+              title: "Rosdeb Koch — Curriculum Vitae (PDF)",
+            })
+          }
+        >
+          <Compass size={15} />
+          <span>Open Resume in Browser</span>
+        </button>
+        <button
+          className="flex items-center gap-1.5 rounded-xl border border-line px-4 py-2.5 text-sm font-medium hover:bg-canvas/60 transition-colors"
           onClick={() => useOs.getState().openWindow("preview", "CV", { kind: "note", id: "cv" })}
         >
           <FileText size={15} />
@@ -876,11 +1009,11 @@ function Finder({ initial }: { initial: string }) {
   };
 
   const favorites = [
-    { label: "About Me", icon: UserRound },
-    { label: "Experience", icon: Briefcase },
-    { label: "Projects", icon: FolderKanban },
-    { label: "Skills", icon: Sparkles },
-    { label: "Documents", icon: FileText },
+    { label: "About Me", kind: "home" },
+    { label: "Experience", kind: "folder" },
+    { label: "Projects", kind: "projects" },
+    { label: "Skills", kind: "skills" },
+    { label: "Documents", kind: "documents" },
   ];
 
   return (
@@ -896,7 +1029,11 @@ function Finder({ initial }: { initial: string }) {
               }`}
               onClick={() => jump(f.label)}
             >
-              <f.icon size={15} />
+              {f.kind === "home" && <MacFolderIcon size={16} variant="home" />}
+              {f.kind === "projects" && <MacFolderIcon size={16} variant="projects" />}
+              {f.kind === "documents" && <MacFolderIcon size={16} variant="documents" />}
+              {f.kind === "folder" && <MacFolderIcon size={16} variant="plain" />}
+              {f.kind === "skills" && <Sparkles size={15} className="text-purple-500" />}
               <span>{f.label}</span>
             </button>
           ))}
@@ -910,7 +1047,7 @@ function Finder({ initial }: { initial: string }) {
             }`}
             onClick={() => jump("Projects/Mobile Apps")}
           >
-            <Folder size={15} className="text-blue-500" />
+            <MacFolderIcon size={16} variant="projects" />
             <span>Mobile Apps</span>
           </button>
           <button
@@ -919,7 +1056,7 @@ function Finder({ initial }: { initial: string }) {
             }`}
             onClick={() => jump("Projects/Developer Tools")}
           >
-            <Folder size={15} className="text-amber-500" />
+            <MacFolderIcon size={16} variant="code" />
             <span>Developer Tools</span>
           </button>
           <button
@@ -928,7 +1065,7 @@ function Finder({ initial }: { initial: string }) {
             }`}
             onClick={() => jump("Projects/Web & Culture")}
           >
-            <Folder size={15} className="text-purple-500" />
+            <MacFolderIcon size={16} variant="projects" />
             <span>Web & Culture</span>
           </button>
         </div>
@@ -972,8 +1109,11 @@ function Finder({ initial }: { initial: string }) {
             </button>
           </div>
 
-          <div className="flex items-center gap-1.5 px-2 py-1 text-muted text-xs font-medium">
-            <Folder size={14} className="text-blue-500" />
+          <div className="flex items-center gap-1.5 px-2 py-1 text-ink text-xs font-medium">
+            <MacFolderIcon
+              size={16}
+              variant={path.includes("About Me") ? "home" : path.includes("Projects") ? "projects" : "plain"}
+            />
             <span>{path || "Rosdeb OS"}</span>
           </div>
 
@@ -1022,18 +1162,33 @@ function Finder({ initial }: { initial: string }) {
                       <div className="mb-2 h-20 w-full overflow-hidden rounded-lg bg-ink/10 border border-line shadow-sm group-hover:scale-105 transition-transform">
                         <img src={thumb} alt={n.name} className="h-full w-full object-cover" />
                       </div>
+                    ) : n.type === "folder" ? (
+                      <div className="mb-1 flex h-16 w-16 items-center justify-center group-hover:scale-105 transition-transform">
+                        <MacFolderIcon
+                          size={54}
+                          variant={
+                            n.name === "About Me"
+                              ? "home"
+                              : n.name.toLowerCase().includes("project") || n.name.toLowerCase().includes("app")
+                              ? "projects"
+                              : n.name === "Documents"
+                              ? "documents"
+                              : n.name === "Developer Tools"
+                              ? "code"
+                              : "plain"
+                          }
+                        />
+                      </div>
                     ) : (
                       <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-canvas/60 text-accent shadow-sm group-hover:scale-105 transition-transform">
-                        {n.type === "folder" ? (
-                          <Folder size={32} className="text-blue-500 fill-blue-500/20" />
-                        ) : n.kind === "project" ? (
+                        {n.kind === "project" ? (
                           <FolderKanban size={28} className="text-accent" />
                         ) : n.kind === "experience" ? (
                           <Briefcase size={28} className="text-amber-500" />
                         ) : n.kind === "skill" ? (
                           <Sparkles size={28} className="text-purple-500" />
                         ) : (
-                          <FileText size={28} className="text-muted" />
+                          <MacDocIcon size={44} badge={n.name.endsWith(".md") ? "MD" : n.ref === "cv" ? "PDF" : "DOC"} />
                         )}
                       </div>
                     )}
@@ -1056,9 +1211,13 @@ function Finder({ initial }: { initial: string }) {
                       onClick={() => openNode(n)}
                     >
                       {n.type === "folder" ? (
-                        <Folder size={16} className="text-blue-500 shrink-0" />
+                        <MacFolderIcon
+                          size={18}
+                          variant={n.name === "About Me" ? "home" : "plain"}
+                          className="shrink-0"
+                        />
                       ) : (
-                        <FileText size={16} className="text-muted shrink-0" />
+                        <MacDocIcon size={16} badge="" className="shrink-0" />
                       )}
                       <span className="font-medium text-ink flex-1 truncate">{n.name}</span>
                       {proj && (
@@ -1178,11 +1337,23 @@ function Preview({ payload }: { payload?: Payload }) {
           {p.links.map((l) => (
             <button
               key={l.url}
-              className="flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-ink hover:opacity-90 shadow-sm transition-opacity"
-              onClick={() => useOs.getState().openWindow("safari", l.label, { kind: "url", url: l.url, title: `${p.name} — ${l.label}` })}
+              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${
+                l.type === "appstore"
+                  ? "bg-[#0071e3] text-white hover:bg-[#0077ed]"
+                  : l.type === "playstore"
+                  ? "bg-[#01875f] text-white hover:bg-[#02976a]"
+                  : l.type === "github"
+                  ? "bg-[#24292f] text-white hover:bg-[#2c323a]"
+                  : "bg-accent text-accent-ink hover:opacity-95"
+              }`}
+              onClick={() =>
+                useOs
+                  .getState()
+                  .openWindow("safari", l.label, { kind: "url", url: l.url, title: `${p.name} — ${l.label}` })
+              }
             >
               <span>{l.label}</span>
-              <Globe size={13} />
+              <ExternalLink size={13} />
             </button>
           ))}
           {p.links.length === 0 && (
@@ -1235,18 +1406,46 @@ function Preview({ payload }: { payload?: Payload }) {
     return (
       <article className="space-y-4 p-6">
         <div className="flex items-center justify-between border-b border-line pb-3">
-          <h3 className="text-xl font-bold tracking-tight">{n.title}</h3>
+          <div>
+            <h3 className="text-xl font-bold tracking-tight">{n.title}</h3>
+            {isCv && <p className="text-xs text-muted mt-0.5">Official Curriculum Vitae · Rosdeb Koch</p>}
+          </div>
           {isCv && (
-            <a
-              href="/rosdeb--cv.pdf"
-              download="Rosdeb_Koch_CV.pdf"
-              className="flex items-center gap-1.5 rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-accent-ink hover:opacity-90 transition-opacity shadow"
-            >
-              <Download size={14} />
-              <span>Download PDF</span>
-            </a>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  useOs.getState().openWindow("safari", "Rosdeb Koch CV", {
+                    kind: "url",
+                    url: "/rosdeb--cv.pdf",
+                    title: "Rosdeb Koch — Curriculum Vitae (PDF)",
+                  })
+                }
+                className="flex items-center gap-1.5 rounded-xl border border-line bg-canvas/30 px-3 py-1.5 text-xs font-medium hover:bg-canvas transition-colors shadow-xs"
+              >
+                <Compass size={14} className="text-blue-500" />
+                <span>Open in Safari Browser</span>
+              </button>
+              <a
+                href="/rosdeb--cv.pdf"
+                download="Rosdeb_Koch_CV.pdf"
+                className="flex items-center gap-1.5 rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-accent-ink hover:opacity-90 transition-opacity shadow"
+              >
+                <Download size={14} />
+                <span>Download PDF</span>
+              </a>
+            </div>
           )}
         </div>
+        {isCv && (
+          <div className="overflow-hidden rounded-xl border border-line bg-canvas/10 shadow-inner">
+            <iframe
+              src="/rosdeb--cv.pdf#toolbar=1"
+              className="h-[520px] w-full border-none"
+              title="Rosdeb Koch CV PDF"
+            />
+          </div>
+        )}
         <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-ink/90 rounded-xl bg-canvas/20 border border-line p-4">
           {n.body}
         </pre>
@@ -1762,6 +1961,16 @@ function SafariApp({ payload }: { payload?: Payload }) {
       {/* Safari Bookmarks Bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto border-b border-line bg-canvas/15 px-3 py-1.5 text-xs select-none">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-muted mr-1">Favorites:</span>
+        <button
+          onClick={() => navigateTo("/rosdeb--cv.pdf")}
+          className={`flex items-center gap-1 shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold transition-colors ${
+            url.includes("cv") ? "bg-accent text-accent-ink" : "bg-rose-500/10 text-rose-500 hover:bg-rose-500/20"
+          }`}
+          title="Open Rosdeb Koch Curriculum Vitae (PDF)"
+        >
+          <FileText size={11} className="text-rose-500" />
+          <span>Resume (CV)</span>
+        </button>
         {sites.map((s) => (
           <button
             key={s.url}
@@ -1796,7 +2005,40 @@ function SafariApp({ payload }: { payload?: Payload }) {
 
       {/* Main Browser View */}
       <div className="relative flex-1 bg-white">
-        {isExternalBlocked ? (
+        {url.endsWith(".pdf") || url.includes("cv") ? (
+          <div className="flex h-full flex-col bg-[#323639]">
+            <div className="flex items-center justify-between border-b border-white/10 bg-[#202224] px-4 py-2 text-xs text-white">
+              <div className="flex items-center gap-2">
+                <FileText size={14} className="text-rose-400" />
+                <span className="font-semibold">Rosdeb Koch — Curriculum Vitae (PDF)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="/rosdeb--cv.pdf"
+                  download="Rosdeb_Koch_CV.pdf"
+                  className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1 font-medium text-white hover:opacity-90 transition-opacity shadow-xs"
+                >
+                  <Download size={13} />
+                  <span>Download PDF</span>
+                </a>
+                <a
+                  href="/rosdeb--cv.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 rounded-lg border border-white/20 px-3 py-1 font-medium text-white hover:bg-white/10 transition-colors"
+                >
+                  <ExternalLink size={13} />
+                  <span>External Window</span>
+                </a>
+              </div>
+            </div>
+            <iframe
+              src="/rosdeb--cv.pdf#toolbar=1"
+              title="Rosdeb Koch CV PDF"
+              className="h-full w-full border-none bg-white"
+            />
+          </div>
+        ) : isExternalBlocked ? (
           <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-canvas/30 text-ink">
             <div className="max-w-md space-y-4 rounded-2xl border border-line bg-paper p-6 shadow-xl">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-accent">
@@ -2030,15 +2272,15 @@ function Toast() {
 
 function MobileHome() {
   const open = (run: () => void) => run();
-  const apps = [
-    { name: "Projects", icon: FolderKanban, run: () => useOs.getState().openWindow("finder", "Projects", { kind: "path", path: "Projects" }) },
-    { name: "Experience", icon: Briefcase, run: () => useOs.getState().openWindow("finder", "Experience", { kind: "path", path: "Experience" }) },
+  const apps: { name: string; kind?: "home" | "projects" | "folder" | "doc"; icon?: typeof Folder; run: () => void }[] = [
+    { name: "About Me", kind: "home", run: () => useOs.getState().openWindow("finder", "About Me", { kind: "path", path: "About Me" }) },
+    { name: "Projects", kind: "projects", run: () => useOs.getState().openWindow("finder", "Projects", { kind: "path", path: "Projects" }) },
+    { name: "Experience", kind: "folder", run: () => useOs.getState().openWindow("finder", "Experience", { kind: "path", path: "Experience" }) },
     { name: "Skills", icon: Sparkles, run: () => useOs.getState().openWindow("skills", "Skills") },
     { name: "Contact", icon: Mail, run: () => useOs.getState().openWindow("mail", "Mail") },
-    { name: "CV", icon: FileText, run: () => useOs.getState().openWindow("preview", "CV", { kind: "note", id: "cv" }) },
+    { name: "CV", kind: "doc", run: () => useOs.getState().openWindow("preview", "CV", { kind: "note", id: "cv" }) },
     { name: "Terminal", icon: TerminalSquare, run: () => useOs.getState().openWindow("terminal", "Terminal") },
     { name: "Sites", icon: Compass, run: () => useOs.getState().openWindow("safari", "Safari") },
-    { name: "Search", icon: Search, run: () => useOs.getState().setSpotlight(true) },
   ];
   const windows = useOs((s) => s.windows);
   const top = [...windows].reverse().find((w) => !w.minimized);
@@ -2053,9 +2295,13 @@ function MobileHome() {
         {apps.map((a) => (
           <button key={a.name} className="flex flex-col items-center gap-1" onClick={() => open(a.run)}>
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-paper/80 text-ink shadow">
-              <a.icon size={22} />
+              {a.kind === "home" && <MacFolderIcon size={36} variant="home" />}
+              {a.kind === "projects" && <MacFolderIcon size={36} variant="projects" />}
+              {a.kind === "folder" && <MacFolderIcon size={36} variant="plain" />}
+              {a.kind === "doc" && <MacDocIcon size={32} badge="CV" />}
+              {a.icon && <a.icon size={22} />}
             </span>
-            <span className="text-[11px]">{a.name}</span>
+            <span className="text-[11px] font-medium">{a.name}</span>
           </button>
         ))}
       </div>
